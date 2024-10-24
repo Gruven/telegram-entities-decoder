@@ -304,7 +304,7 @@ class EntityDecoder
      * Apply Telegram escape rules for the choosen style
      */
     protected function escapeSpecialChars($char, $isEntityOpen, $entities) {
-        if ($this->style == 'Markdown')
+        if ($this->style === 'Markdown')
         {
             if ($isEntityOpen)
             {
@@ -337,27 +337,36 @@ class EntityDecoder
                 }
             }
         }
-        else if ($this->style == 'HTML')
+        else if ($this->style === 'HTML')
         {
             return ($char == '<' ? '&lt;' : ($char == '>' ? '&gt;' : ($char == '&' ? '&amp;' : $char)));
         }
-        else if ($this->style == 'MarkdownV2')
+        else if ($this->style === 'MarkdownV2')
         {
             $isBlockquoteOpen = false;
+            $isPreOpen = false;
+
             foreach ($entities as $entity) {
-                if ($entity->type === 'blockquote') {
-                    $isBlockquoteOpen = true;
-                    break;
+                switch ($entity->type) {
+                    case 'blockquote':
+                        $isBlockquoteOpen = true;
+                        break;
+
+                    case 'pre':
+                        $isPreOpen = true;
+                        break;
                 }
             }
-            if($isBlockquoteOpen && $char == "\n")
-            {
+
+            if ($isBlockquoteOpen && $char === "\n") {
                 return $char.'>';
             }
-            else
-            {
-                return (in_array($char, ['_', '*', '[', ']', '(', ')', '~', '`', '>', '#', '+', '-', '=', '|', '{', '}', '.', '!', '\\']) ? '\\'.$char : $char);
+
+            if ($isPreOpen) {
+                return (in_array($char, ['`', '\\']) ? '\\' . $char : $char);
             }
+
+            return (in_array($char, ['_', '*', '[', ']', '(', ')', '~', '`', '>', '#', '+', '-', '=', '|', '{', '}', '.', '!', '\\']) ? '\\'.$char : $char);
         }
         else
         {
